@@ -1,3 +1,31 @@
+# RV32I Instruction Encoder
+
+<div align="center">
+
+![RISC‑V Logo](docs/riscv.png)
+
+**Encoding and validation tool for the RISC-V RV32I instruction set architecture**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+</div>
+
+---
+
+## Overview
+
+...
+
+---
+
+## Official Tool Validation
+
+```
+sudo pacman -S riscv64-elf-binutils
+```
+
+---
+
 # Kit del proyecto
 
 - `encoder_skeleton.py`: esqueleto en Python con el contrato de entrada/salida
