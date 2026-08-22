@@ -1,0 +1,58 @@
+{
+  "rv32i": {
+    "xor": {
+      "format": "R",
+      "opcode": "0110011",
+      "funct3": "100",
+      "funct7": "0000000"
+    },
+    "slt": {
+      "format": "R",
+      "opcode": "0110011",
+      "funct3": "010",
+      "funct7": "0000000"
+    },
+    "sll": {
+      "format": "R",
+      "opcode": "0110011",
+      "funct3": "001",
+      "funct7": "0000000"
+    },
+    "ori": {
+      "format": "I",
+      "opcode": "0010011",
+      "funct3": "110",
+      "funct7": null
+    },
+    "slti": {
+      "format": "I",
+      "opcode": "0010011",
+      "funct3": "010",
+      "funct7": null
+    },
+    "lh": {
+      "format": "I",
+      "opcode": "0000011",
+      "funct3": "001",
+      "funct7": null
+    },
+    "sh": {
+      "format": "S",
+      "opcode": "0100011",
+      "funct3": "001",
+      "funct7": null
+    },
+    "blt": {
+      "format": "B",
+      "opcode": "1100011",
+      "funct3": "100",
+      "funct7": null
+    },
+    "bge": {
+      "format": "B",
+      "opcode": "1100011",
+      "funct3": "101",
+      "funct7": null
+    }
+  }
+}
