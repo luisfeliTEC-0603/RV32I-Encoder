@@ -6,58 +6,70 @@
       "funct3": "000",
       "funct7": "0000000"
     },
-    "xor": {
+    "sub": {
       "format": "R",
       "opcode": "0110011",
-      "funct3": "100",
-      "funct7": "0000000"
+      "funct3": "000",
+      "funct7": "0100000"
     },
-    "slt": {
+    "and": {
       "format": "R",
       "opcode": "0110011",
-      "funct3": "010",
+      "funct3": "111",
       "funct7": "0000000"
     },
-    "sll": {
+    "or": {
       "format": "R",
       "opcode": "0110011",
-      "funct3": "001",
-      "funct7": "0000000"
-    },
-    "ori": {
-      "format": "I",
-      "opcode": "0010011",
       "funct3": "110",
-      "funct7": null
+      "funct7": "0000000"
     },
-    "slti": {
+    "addi": {
       "format": "I",
       "opcode": "0010011",
-      "funct3": "010",
+      "funct3": "000",
       "funct7": null
     },
-    "lh": {
+    "andi": {
+      "format": "I",
+      "opcode": "0010011",
+      "funct3": "111",
+      "funct7": null
+    },
+    "lw": {
       "format": "I",
       "opcode": "0000011",
-      "funct3": "001",
+      "funct3": "010",
       "funct7": null
     },
-    "sh": {
+    "lb": {
+      "format": "I",
+      "opcode": "0000011",
+      "funct3": "000",
+      "funct7": null
+    },
+    "sw": {
       "format": "S",
       "opcode": "0100011",
+      "funct3": "010",
+      "funct7": null
+    },
+    "sb": {
+      "format": "S",
+      "opcode": "0100011",
+      "funct3": "000",
+      "funct7": null
+    },
+    "beq": {
+      "format": "B",
+      "opcode": "1100011",
+      "funct3": "000",
+      "funct7": null
+    },
+    "bne": {
+      "format": "B",
+      "opcode": "1100011",
       "funct3": "001",
-      "funct7": null
-    },
-    "blt": {
-      "format": "B",
-      "opcode": "1100011",
-      "funct3": "100",
-      "funct7": null
-    },
-    "bge": {
-      "format": "B",
-      "opcode": "1100011",
-      "funct3": "101",
       "funct7": null
     }
   }
