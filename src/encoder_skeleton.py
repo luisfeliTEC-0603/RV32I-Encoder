@@ -36,6 +36,12 @@ def encode_instruction(tokens: list) -> int:
     tokens[0] = tokens[0].lower()
     operands = tokens[1:]
 
+    inst = parser.get_instruction_info(tokens[0])
+
+    print(f'{tokens[0]} : {inst}')
+    print(parser.get_register_info(tokens[1]))
+    print(parser.get_format_info(inst["format"]))
+
     raise NotImplementedError("encode_instruction: pendiente de implementar")
 
 def explain_instruction(instruction: str, word: int) -> str:

@@ -59,3 +59,28 @@ class RISCV_Parser:
             tokens[0] = tokens[0][:-1]
         
         return tokens
+
+    def get_instruction_info(self, instruction_name: str) -> dict:
+        if instruction_name not in self.supported_inst or instruction_name not in self.inst_data:
+            raise ValueError(f"[ ERROR ] Unsupported instruction: {instruction_name}")
+        
+        inst_info = self.inst_data[instruction_name]
+        
+        return {
+            "format": inst_info.get("format"),
+            "opcode": inst_info.get("opcode"),
+            "funct3": inst_info.get("funct3"),
+            "funct7": inst_info.get("funct7")
+        }
+    
+    def get_register_info(self, reg_name: str) -> int:
+        if reg_name not in self.reg_data:
+            raise ValueError(f"[ ERROR ] Unknown register: {reg_name}")
+        
+        return self.reg_data[reg_name]
+    
+    def get_format_info(self, format_type: str) -> dict:
+        if format_type not in self.fmt_data:
+            raise ValueError(f"[ ERROR ] Unknown format type: {format_type}")
+        
+        return self.fmt_data[format_type]
