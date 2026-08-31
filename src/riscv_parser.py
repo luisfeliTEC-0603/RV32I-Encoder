@@ -9,7 +9,6 @@ class RISCV_Parser:
     
         self.inst_data = {}
         self.reg_data = {}
-        self.fmt_data = {}
         
         self._load_all_json_data()
         
@@ -33,9 +32,6 @@ class RISCV_Parser:
             
             reg_json = self._load_json_file('riscv_reg.json')
             self.reg_data = reg_json.get('reg', {})
-            
-            fmt_json = self._load_json_file('riscv_fmt.json')
-            self.fmt_data = fmt_json.get('fmt', {})
             
         except (FileNotFoundError, ValueError) as e:
             print(f"[ ERROR ] While loading JSON data: {e}", file=sys.stderr)

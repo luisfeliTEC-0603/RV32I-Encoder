@@ -20,6 +20,9 @@ SOPORTADAS = ["add", "sub", "and", "or", "addi", "andi",
 from riscv_parser import RISCV_Parser
 parser = RISCV_Parser(SOPORTADAS)
 
+from riscv_encoder import RISCV_Encoder
+encoder = RISCV_Encoder()
+
 def encode_instruction(tokens: list) -> int:
     """
     Recibe una instrucción como texto, p. ej. "add x5, x6, x7", y debe
@@ -33,15 +36,82 @@ def encode_instruction(tokens: list) -> int:
     # TODO: implementar. Sugerencia: parsear el mnemónico y los operandos,
     # despachar según el formato (R/I/S/B), y ensamblar los campos con
     # operaciones de bits.
-    tokens[0] = tokens[0].lower()
+    inst_name = tokens[0].lower()
     operands = tokens[1:]
 
-    inst = parser.get_instruction_info(tokens[0])
+    inst_info = parser.get_instruction_info(inst_name)
+    format_type = inst_info['format']
+    
+    opcode = int(inst_info['opcode'], 2)
+    funct3 = int(inst_info['funct3'], 2) if inst_info['funct3'] else 0
+    funct7 = int(inst_info['funct7'], 2) if inst_info['funct7'] else 0
+    
+    params = {
+        'opcode': opcode,
+        'funct3': funct3,
+        'funct7': funct7
+    }
+    
+    if format_type == 'R':
+        # R-format: rd, rs1, rs2
+        if len(operands) != 3:
+            raise ValueError(f"R-format instruction '{inst_name}' expects 3 operands")
+        
+        params['rd'] = parser.get_register_info(operands[0])
+        params['rs1'] = parser.get_register_info(operands[1])
+        params['rs2'] = parser.get_register_info(operands[2])
 
-    print(f'{tokens[0]} : {inst}')
-    print(parser.get_register_info(tokens[1]))
-    print(parser.get_format_info(inst["format"]))
+        return encoder.encode_r_format(**params) 
+    
+    elif format_type == 'I':
+        # I-format: rd, rs1, imm
+        if len(operands) != 3:
+            raise ValueError(f"I-format instruction '{inst_name}' expects 3 operands")
+        
+        params['rd'] = parser.get_register_info(operands[0])
+        params['rs1'] = parser.get_register_info(operands[1])
+        params['imm'] = int(operands[2]) if operands[2].lstrip('-').isdigit() else 0
+        
+        return encoder.encode_i_format(**params)  
+    
+    elif format_type == 'S':
+        # S-format: rs2, offset(rs1) or rs1, rs2, imm
+        if len(operands) != 3:
+            raise ValueError(f"S-format instruction '{inst_name}' expects 3 operands")
+        
+        # Check if second operand contains parentheses (offset(rs1) format)
+        if '(' in operands[1] and ')' in operands[1]:
+            # Format: inst rs2, offset(rs1)
+            params['rs2'] = parser.get_register_info(operands[0])
+            
+            offset_part = operands[1]
+            offset_str = offset_part.split('(')[0]
+            rs1_str = offset_part.split('(')[1].split(')')[0]
+            
+            params['rs1'] = parser.get_register_info(rs1_str)
+            params['imm'] = int(offset_str) if offset_str and offset_str != '-' else 0
+        else:
+            # Format: inst rs1, rs2, imm
+            params['rs1'] = parser.get_register_info(operands[0])
+            params['rs2'] = parser.get_register_info(operands[1])
+            params['imm'] = int(operands[2]) if operands[2].lstrip('-').isdigit() else 0
 
+        return encoder.encode_s_format(**params)  
+    
+    elif format_type == 'B':
+        # B-format: rs1, rs2, imm
+        if len(operands) != 3:
+            raise ValueError(f"B-format instruction '{inst_name}' expects 3 operands")
+        
+        params['rs1'] = parser.get_register_info(operands[0])
+        params['rs2'] = parser.get_register_info(operands[1])
+        params['imm'] = int(operands[2]) if operands[2].lstrip('-').isdigit() else 0
+
+        return encoder.encode_b_format(**params)  
+    
+    else:
+        raise ValueError(f"Unsupported format: {format_type}")
+    
     raise NotImplementedError("encode_instruction: pendiente de implementar")
 
 def explain_instruction(instruction: str, word: int) -> str:
@@ -69,6 +139,7 @@ def main():
     print(tokens)
 
     word = encode_instruction(tokens) & 0xFFFFFFFF
+    print(f"{word:b}")
 
     print(explain_instruction(instruction, word))
 
