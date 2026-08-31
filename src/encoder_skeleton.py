@@ -14,12 +14,13 @@ respete el mismo contrato (ver especificación, sección "Modo de operación").
 """
 import sys
 
-from riscv_parser import RISCV_Parser
-
 SOPORTADAS = ["add", "sub", "and", "or", "addi", "andi",
               "lw", "lb", "sw", "sb", "beq", "bne"]
 
-def encode_instruction(instruction: str) -> int:
+from riscv_parser import RISCV_Parser
+parser = RISCV_Parser(SOPORTADAS)
+
+def encode_instruction(tokens: list) -> int:
     """
     Recibe una instrucción como texto, p. ej. "add x5, x6, x7", y debe
     retornar su codificación de 32 bits como entero (0 <= valor < 2**32).
@@ -32,11 +33,8 @@ def encode_instruction(instruction: str) -> int:
     # TODO: implementar. Sugerencia: parsear el mnemónico y los operandos,
     # despachar según el formato (R/I/S/B), y ensamblar los campos con
     # operaciones de bits.
-
-    parser = RISCV_Parser()
-    tokens = parser.tokenize(instruction)
-    print(tokens)
-    parser.analyse_tokens(tokens, SOPORTADAS) 
+    tokens[0] = tokens[0].lower()
+    operands = tokens[1:]
 
     raise NotImplementedError("encode_instruction: pendiente de implementar")
 
@@ -60,7 +58,11 @@ def main():
         sys.exit(2)
 
     instruction = sys.argv[1]
-    word = encode_instruction(instruction) & 0xFFFFFFFF
+
+    tokens = parser.tokenize(instruction)
+    print(tokens)
+
+    word = encode_instruction(tokens) & 0xFFFFFFFF
 
     print(explain_instruction(instruction, word))
 
