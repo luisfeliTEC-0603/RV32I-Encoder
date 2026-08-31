@@ -24,18 +24,9 @@ from riscv_encoder import RISCV_Encoder
 encoder = RISCV_Encoder()
 
 def encode_instruction(tokens: list) -> int:
-    """
-    Recibe una instrucción como texto, p. ej. "add x5, x6, x7", y debe
-    retornar su codificación de 32 bits como entero (0 <= valor < 2**32).
-
-    Debe soportar únicamente las instrucciones en SOPORTADAS. Los valores
-    de opcode/funct3/funct7 de cada una NO se proveen aquí: deben
-    investigarse en el manual oficial de la ISA RISC-V (ver referencia en
-    la especificación) y documentarse en el README.
-    """
-    # TODO: implementar. Sugerencia: parsear el mnemónico y los operandos,
-    # despachar según el formato (R/I/S/B), y ensamblar los campos con
-    # operaciones de bits.
+    if not tokens:
+        raise ValueError("Empty instruction")
+    
     inst_name = tokens[0].lower()
     operands = tokens[1:]
 
@@ -46,73 +37,78 @@ def encode_instruction(tokens: list) -> int:
     funct3 = int(inst_info['funct3'], 2) if inst_info['funct3'] else 0
     funct7 = int(inst_info['funct7'], 2) if inst_info['funct7'] else 0
     
-    params = {
-        'opcode': opcode,
-        'funct3': funct3,
-        'funct7': funct7
-    }
+    def parse_imm(imm_str: str) -> int:
+        if imm_str.startswith('0x') or imm_str.startswith('0X'):
+            return int(imm_str, 16)
+        elif imm_str.startswith('0b') or imm_str.startswith('0B'):
+            return int(imm_str, 2)
+        else:
+            return int(imm_str)
     
     if format_type == 'R':
-        # R-format: rd, rs1, rs2
         if len(operands) != 3:
             raise ValueError(f"R-format instruction '{inst_name}' expects 3 operands")
         
-        params['rd'] = parser.get_register_info(operands[0])
-        params['rs1'] = parser.get_register_info(operands[1])
-        params['rs2'] = parser.get_register_info(operands[2])
-
+        params = {
+            'rd': parser.get_register_info(operands[0]),
+            'rs1': parser.get_register_info(operands[1]),
+            'rs2': parser.get_register_info(operands[2]),
+            'opcode': opcode,
+            'funct3': funct3,
+            'funct7': funct7
+        }
         return encoder.encode_r_format(**params) 
     
     elif format_type == 'I':
-        # I-format: rd, rs1, imm
         if len(operands) != 3:
             raise ValueError(f"I-format instruction '{inst_name}' expects 3 operands")
         
-        params['rd'] = parser.get_register_info(operands[0])
-        params['rs1'] = parser.get_register_info(operands[1])
-        params['imm'] = int(operands[2]) if operands[2].lstrip('-').isdigit() else 0
-        
+        params = {
+            'rd': parser.get_register_info(operands[0]),
+            'rs1': parser.get_register_info(operands[1]),
+            'imm': parse_imm(operands[2]),
+            'opcode': opcode,
+            'funct3': funct3
+        }
         return encoder.encode_i_format(**params)  
     
     elif format_type == 'S':
-        # S-format: rs2, offset(rs1) or rs1, rs2, imm
-        if len(operands) != 3:
-            raise ValueError(f"S-format instruction '{inst_name}' expects 3 operands")
-        
-        # Check if second operand contains parentheses (offset(rs1) format)
-        if '(' in operands[1] and ')' in operands[1]:
-            # Format: inst rs2, offset(rs1)
-            params['rs2'] = parser.get_register_info(operands[0])
-            
-            offset_part = operands[1]
-            offset_str = offset_part.split('(')[0]
-            rs1_str = offset_part.split('(')[1].split(')')[0]
-            
-            params['rs1'] = parser.get_register_info(rs1_str)
-            params['imm'] = int(offset_str) if offset_str and offset_str != '-' else 0
+        if len(operands) == 2:
+            params = {
+                'rs2': parser.get_register_info(operands[0]),
+                'imm': 0,
+                'rs1': parser.get_register_info(operands[1]),
+                'opcode': opcode,
+                'funct3': funct3
+            }
+        elif len(operands) == 3:
+            params = {
+                'rs2': parser.get_register_info(operands[0]),
+                'imm': parse_imm(operands[1]),
+                'rs1': parser.get_register_info(operands[2]),
+                'opcode': opcode,
+                'funct3': funct3
+            }
         else:
-            # Format: inst rs1, rs2, imm
-            params['rs1'] = parser.get_register_info(operands[0])
-            params['rs2'] = parser.get_register_info(operands[1])
-            params['imm'] = int(operands[2]) if operands[2].lstrip('-').isdigit() else 0
+            raise ValueError(f"S-format instruction '{inst_name}' expects 2 or 3 operands")
 
         return encoder.encode_s_format(**params)  
     
     elif format_type == 'B':
-        # B-format: rs1, rs2, imm
         if len(operands) != 3:
             raise ValueError(f"B-format instruction '{inst_name}' expects 3 operands")
         
-        params['rs1'] = parser.get_register_info(operands[0])
-        params['rs2'] = parser.get_register_info(operands[1])
-        params['imm'] = int(operands[2]) if operands[2].lstrip('-').isdigit() else 0
-
+        params = {
+            'rs1': parser.get_register_info(operands[0]),
+            'rs2': parser.get_register_info(operands[1]),
+            'imm': parse_imm(operands[2]),
+            'opcode': opcode,
+            'funct3': funct3
+        }
         return encoder.encode_b_format(**params)  
     
     else:
         raise ValueError(f"Unsupported format: {format_type}")
-    
-    raise NotImplementedError("encode_instruction: pendiente de implementar")
 
 def explain_instruction(instruction: str, word: int) -> str:
     """
@@ -140,6 +136,7 @@ def main():
 
     word = encode_instruction(tokens) & 0xFFFFFFFF
     print(f"{word:b}")
+    print(f"HEX: 0x{word:08x}")
 
     print(explain_instruction(instruction, word))
 

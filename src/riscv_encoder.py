@@ -8,8 +8,7 @@ class RISCV_Encoder:
         
         return value & ((1 << bits) - 1)
     
-    def encode_r_format(self, rd: int, rs1: int, rs2: int, 
-                       opcode: int, funct3: int, funct7: int) -> int:
+    def encode_r_format(self, rd: int, rs1: int, rs2: int, opcode: int, funct3: int, funct7: int) -> int:
         """
         Encode R-format instruction.
         Format: opcode(7) | rd(5) | funct3(3) | rs1(5) | rs2(5) | funct7(7)
@@ -34,9 +33,8 @@ class RISCV_Encoder:
         instruction |= (opcode & 0x7F)         # opcode: bits 0-6
         
         return instruction
-    
-    def encode_i_format(self, rd: int, rs1: int, imm: int,
-                       opcode: int, funct3: int) -> int:
+
+    def encode_i_format(self, rd: int, rs1: int, imm: int, opcode: int, funct3: int) -> int:
         """
         Encode I-format instruction.
         Format: opcode(7) | rd(5) | funct3(3) | rs1(5) | imm(12)
@@ -62,8 +60,7 @@ class RISCV_Encoder:
         
         return instruction
     
-    def encode_s_format(self, rs1: int, rs2: int, imm: int,
-                       opcode: int, funct3: int) -> int:
+    def encode_s_format(self, rs1: int, rs2: int, imm: int, opcode: int, funct3: int) -> int:
         """
         Encode S-format instruction.
         Format: opcode(7) | imm[4:0](5) | funct3(3) | rs1(5) | rs2(5) | imm[11:5](7)
@@ -91,9 +88,8 @@ class RISCV_Encoder:
         instruction |= (opcode & 0x7F)         # opcode: bits 0-6
         
         return instruction
-    
-    def encode_b_format(self, rs1: int, rs2: int, imm: int,
-                       opcode: int, funct3: int) -> int:
+
+    def encode_b_format(self, rs1: int, rs2: int, imm: int, opcode: int, funct3: int) -> int:
         """
         Encode B-format instruction.
         Format: opcode(7) | imm[11](1) | imm[4:1](4) | funct3(3) | rs1(5) | rs2(5) | imm[10:5](6) | imm[12](1)
