@@ -111,17 +111,52 @@ def encode_instruction(tokens: list) -> int:
         raise ValueError(f"Unsupported format: {format_type}")
 
 def explain_instruction(instruction: str, word: int) -> str:
-    """
-    Debe retornar un texto (para imprimirse en pantalla) que muestre, de
-    forma visual, los 32 bits de 'word' divididos en los campos del
-    formato correspondiente (R, I, S o B) — indicando el rango de bits y
-    el valor de cada campo — junto con una breve explicación de cada uno.
-    El formato visual (colores, tabla, arte ASCII, etc.) queda a su
-    criterio, siempre que sea claro.
-    """
-    # TODO: implementar.
-    raise NotImplementedError("explain_instruction: pendiente de implementar")
-
+    tokens = parser.tokenize(instruction)
+    if not tokens:
+        return "Empty instruction"
+    
+    inst_name = tokens[0].lower()
+    inst_info = parser.get_instruction_info(inst_name)
+    format_type = inst_info['format']
+    
+    fmt_info = parser.get_format_info(format_type)
+    
+    result = []
+    result.append("=" * 80)
+    result.append(f"INSTRUCTION: {instruction}")
+    result.append(f"FORMAT: {format_type} - {fmt_info['description']}")
+    result.append("=" * 80)
+    result.append(f"BINARY: {word:032b}")
+    result.append(f"HEX:   0x{word:08x}")
+    result.append("=" * 80)
+    result.append(f"{'Field':<18} {'Bits':<12} {'Value':<12} {'Description'}")
+    result.append("-" * 80)
+    
+    for field in fmt_info['fields']:
+        name = field['name']
+        start = field['start_bit']
+        end = field['end_bit']
+        desc = field['description']
+        
+        bit_range = f"{start}-{end}"
+        if start == end:
+            bit_range = str(start)
+        
+        mask = ((1 << (end - start + 1)) - 1) << start
+        value = (word & mask) >> start
+        
+        if name == 'opcode':
+            value_str = f"0x{value:02x}"
+        elif name.startswith('imm'):
+            value_str = f"{value} (0x{value:x})"
+        else:
+            value_str = str(value)
+        
+        result.append(f"{name:<18} {bit_range:<12} {value_str:<12} {desc}")
+    
+    result.append("=" * 80)
+    
+    return "\n".join(result)
 
 def main():
     if len(sys.argv) != 2:
