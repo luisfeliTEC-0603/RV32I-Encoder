@@ -14,9 +14,10 @@ respete el mismo contrato (ver especificación, sección "Modo de operación").
 """
 import sys
 
+from riscv_parser import RISCV_Parser
+
 SOPORTADAS = ["add", "sub", "and", "or", "addi", "andi",
               "lw", "lb", "sw", "sb", "beq", "bne"]
-
 
 def encode_instruction(instruction: str) -> int:
     """
@@ -31,8 +32,13 @@ def encode_instruction(instruction: str) -> int:
     # TODO: implementar. Sugerencia: parsear el mnemónico y los operandos,
     # despachar según el formato (R/I/S/B), y ensamblar los campos con
     # operaciones de bits.
-    raise NotImplementedError("encode_instruction: pendiente de implementar")
 
+    parser = RISCV_Parser()
+    tokens = parser.tokenize(instruction)
+    print(tokens)
+    parser.analyse_tokens(tokens, SOPORTADAS) 
+
+    raise NotImplementedError("encode_instruction: pendiente de implementar")
 
 def explain_instruction(instruction: str, word: int) -> str:
     """
@@ -49,8 +55,8 @@ def explain_instruction(instruction: str, word: int) -> str:
 
 def main():
     if len(sys.argv) != 2:
-        print(f'Uso: {sys.argv[0]} "<instruccion>"', file=sys.stderr)
-        print(f'Ejemplo: {sys.argv[0]} "add x5, x6, x7"', file=sys.stderr)
+        print(f'Usage: {sys.argv[0]} "<instruction>"', file=sys.stderr)
+        print(f'Example: {sys.argv[0]} "add x5, x6, x7"', file=sys.stderr)
         sys.exit(2)
 
     instruction = sys.argv[1]
@@ -61,7 +67,6 @@ def main():
     # No modificar el formato de la siguiente línea: la especificación la
     # requiere, literal, para permitir la validación automática.
     print(f"HEX: 0x{word:08x}")
-
 
 if __name__ == "__main__":
     main()
