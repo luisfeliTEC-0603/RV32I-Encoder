@@ -7,7 +7,7 @@ class RISCV_Encoder:
         if sign_extend and value < 0:
             value = (1 << bits) + value
         
-        print(f'├ Argument (Immediate): {original_value} ({value:>{bits}b})')
+        print(f'├ ARG (IMM): {original_value} ({value:>{bits}b})')
         return value & ((1 << bits) - 1)
     
     def encode_r_format(self, rd: int, rs1: int, rs2: int, opcode: int, funct3: int, funct7: int) -> int:

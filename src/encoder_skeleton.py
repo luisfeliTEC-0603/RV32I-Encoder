@@ -111,14 +111,11 @@ def explain_instruction(instruction: str, word: int) -> str:
     fmt_info = parser.get_format_info(format_type)
     
     result = []
-    result.append("─" * 95)
-    result.append(f"INSTRUCTION: {instruction}")
-    result.append(f"FORMAT: {format_type} - {fmt_info['description']}")
-    result.append("─" * 95)
-    result.append(f"BINARY: {word:032b}")
-    result.append(f"HEX: 0x{word:08x}")
-    result.append("─" * 95)
-    result.append(f"{'Field':<18} {'Bits':<12} {'Binary':<16} {'Value':<12} {'Description'}")
+    result.append(f"│")
+    result.append(f"├ FORMAT:{format_type}")
+    result.append(f'│\t └── {fmt_info['description']}')
+    result.append("└" + "─" * 94)
+    result.append(f"{'FIELD':<18} {'BITS':<12} {'BINARY':<16} {'VALUE':<12} {'DESCRIPTION'}")
     result.append("─" * 95)
     
     for field in fmt_info['fields']:
@@ -145,7 +142,8 @@ def explain_instruction(instruction: str, word: int) -> str:
         
         result.append(f"{name:<18} {bit_range:<12} {field_bin:<16} {value_str:<12} {desc}")
     
-    result.append("─" * 95)
+    result.append("┌" + "─" * 94)
+    result.append(f"└ ENCODING DONE (•ᴗ•)\n")
     
     return "\n".join(result)
 
@@ -168,10 +166,12 @@ def main():
     word = encode_instruction(tokens) & 0xFFFFFFFF
 
     print(explain_instruction(instruction, word))
+    print(f"BINARY: {word:032b}")
 
     # No modificar el formato de la siguiente línea: la especificación la
     # requiere, literal, para permitir la validación automática.
     print(f"HEX: 0x{word:08x}")
+    print()
 
 if __name__ == "__main__":
     main()

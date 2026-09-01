@@ -70,10 +70,9 @@ class RISCV_Parser:
 
         if not silence:
             print(f'├ MNEMONIC: {instruction_name}')
-            print(f'│\t ├── Format: {inst_info.get("format", "N/A")}')
-            print(f'│\t ├── Opcode: {inst_info.get("opcode", "N/A")}')
-            print(f'│\t ├── Funct7: {inst_info.get("funct7", "N/A")}') 
-            print(f'│\t └── Funct3: {inst_info.get("funct3", "N/A")}') 
+            print(f'│\t ├── OPCODE: {inst_info.get("opcode", "N/A")}')
+            print(f'│\t ├── FUNCT7: {inst_info.get("funct7", "N/A")}') 
+            print(f'│\t └── FUNCT3: {inst_info.get("funct3", "N/A")}') 
 
         return {
             "format": inst_info.get("format"),
@@ -87,7 +86,7 @@ class RISCV_Parser:
             raise ValueError(f"[ ERROR ] Unknown register: {reg_name}")
 
         data = self.reg_data[reg_name]
-        print(f'├ Argument (Register): {reg_name} ({data:05b})')
+        print(f'├ ARG (REG): {reg_name} ({data:05b})')
 
         return data 
     
