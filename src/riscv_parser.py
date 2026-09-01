@@ -44,6 +44,8 @@ class RISCV_Parser:
     def tokenize(self, instruction: str) -> list:
         if '#' in instruction:
             instruction = instruction.split('#')[0]
+        if ';' in instruction:
+            instruction = instruction.split(';')[0]
         
         instruction = instruction.strip()
         
@@ -60,12 +62,19 @@ class RISCV_Parser:
         
         return tokens
 
-    def get_instruction_info(self, instruction_name: str) -> dict:
+    def get_instruction_info(self, instruction_name: str, silence: bool) -> dict:
         if instruction_name not in self.supported_inst or instruction_name not in self.inst_data:
             raise ValueError(f"[ ERROR ] Unsupported instruction: {instruction_name}")
         
         inst_info = self.inst_data[instruction_name]
-        
+
+        if not silence:
+            print(f'├ MNEMONIC: {instruction_name}')
+            print(f'│\t ├── Format: {inst_info.get("format", "N/A")}')
+            print(f'│\t ├── Opcode: {inst_info.get("opcode", "N/A")}')
+            print(f'│\t ├── Funct7: {inst_info.get("funct7", "N/A")}') 
+            print(f'│\t └── Funct3: {inst_info.get("funct3", "N/A")}') 
+
         return {
             "format": inst_info.get("format"),
             "opcode": inst_info.get("opcode"),
@@ -76,8 +85,11 @@ class RISCV_Parser:
     def get_register_info(self, reg_name: str) -> int:
         if reg_name not in self.reg_data:
             raise ValueError(f"[ ERROR ] Unknown register: {reg_name}")
-        
-        return self.reg_data[reg_name]
+
+        data = self.reg_data[reg_name]
+        print(f'├ Argument (Register): {reg_name} ({data:05b})')
+
+        return data 
     
     def get_format_info(self, format_type: str) -> dict:
         if format_type not in self.fmt_data:

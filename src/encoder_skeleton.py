@@ -1,17 +1,4 @@
 #!/usr/bin/env python3
-"""
-Esqueleto del Codificador Educativo de Instrucciones RISC-V.
-CE4301 Arquitectura de Computadores I — Proyecto Individual — 2026-II
-
-Este esqueleto ya implementa el contrato de línea de comandos y de salida
-requerido por la especificación. Usted debe completar las dos funciones
-marcadas con TODO; puede modificar el resto del archivo si lo necesita,
-siempre que se preserve el contrato de invocación y la línea "HEX: 0x...".
-
-No es obligatorio usar este esqueleto ni Python: puede implementar su
-propia herramienta desde cero, en el lenguaje que prefiera, siempre que
-respete el mismo contrato (ver especificación, sección "Modo de operación").
-"""
 import sys
 
 SOPORTADAS = ["add", "sub", "and", "or", "addi", "andi",
@@ -24,13 +11,15 @@ from riscv_encoder import RISCV_Encoder
 encoder = RISCV_Encoder()
 
 def encode_instruction(tokens: list) -> int:
+    print('ENCODING...') 
     if not tokens:
-        raise ValueError("Empty instruction")
+        raise ValueError("[ ERROR ] Empty instruction")
     
     inst_name = tokens[0].lower()
     operands = tokens[1:]
+    print(f'├ TOKENS: {tokens}')
 
-    inst_info = parser.get_instruction_info(inst_name)
+    inst_info = parser.get_instruction_info(inst_name, False)
     format_type = inst_info['format']
     
     opcode = int(inst_info['opcode'], 2)
@@ -116,21 +105,21 @@ def explain_instruction(instruction: str, word: int) -> str:
         return "Empty instruction"
     
     inst_name = tokens[0].lower()
-    inst_info = parser.get_instruction_info(inst_name)
+    inst_info = parser.get_instruction_info(inst_name, True)
     format_type = inst_info['format']
     
     fmt_info = parser.get_format_info(format_type)
     
     result = []
-    result.append("=" * 80)
+    result.append("─" * 95)
     result.append(f"INSTRUCTION: {instruction}")
     result.append(f"FORMAT: {format_type} - {fmt_info['description']}")
-    result.append("=" * 80)
+    result.append("─" * 95)
     result.append(f"BINARY: {word:032b}")
-    result.append(f"HEX:   0x{word:08x}")
-    result.append("=" * 80)
-    result.append(f"{'Field':<18} {'Bits':<12} {'Value':<12} {'Description'}")
-    result.append("-" * 80)
+    result.append(f"HEX: 0x{word:08x}")
+    result.append("─" * 95)
+    result.append(f"{'Field':<18} {'Bits':<12} {'Binary':<16} {'Value':<12} {'Description'}")
+    result.append("─" * 95)
     
     for field in fmt_info['fields']:
         name = field['name']
@@ -145,6 +134,8 @@ def explain_instruction(instruction: str, word: int) -> str:
         mask = ((1 << (end - start + 1)) - 1) << start
         value = (word & mask) >> start
         
+        field_bin = format(value, f'0{end - start + 1}b')
+        
         if name == 'opcode':
             value_str = f"0x{value:02x}"
         elif name.startswith('imm'):
@@ -152,9 +143,9 @@ def explain_instruction(instruction: str, word: int) -> str:
         else:
             value_str = str(value)
         
-        result.append(f"{name:<18} {bit_range:<12} {value_str:<12} {desc}")
+        result.append(f"{name:<18} {bit_range:<12} {field_bin:<16} {value_str:<12} {desc}")
     
-    result.append("=" * 80)
+    result.append("─" * 95)
     
     return "\n".join(result)
 
@@ -166,12 +157,15 @@ def main():
 
     instruction = sys.argv[1]
 
-    tokens = parser.tokenize(instruction)
-    print(tokens)
+    print('[ INSTRUCTION ]')
+    box_width = len(instruction) + 6
+    print("┌" + "─" * box_width + "┐")
+    print("│" + " " * 3 + instruction.upper() + " " * 3 + "│")
+    print("└" + "─" * box_width + "┘")
+    print()
 
+    tokens = parser.tokenize(instruction)
     word = encode_instruction(tokens) & 0xFFFFFFFF
-    print(f"{word:b}")
-    print(f"HEX: 0x{word:08x}")
 
     print(explain_instruction(instruction, word))
 

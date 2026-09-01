@@ -3,9 +3,11 @@ class RISCV_Encoder:
         pass
     
     def encode_immediate(self, value: int, bits: int = 12, sign_extend: bool = True) -> int:
+        original_value = value
         if sign_extend and value < 0:
             value = (1 << bits) + value
         
+        print(f'├ Argument (Immediate): {original_value} ({value:>{bits}b})')
         return value & ((1 << bits) - 1)
     
     def encode_r_format(self, rd: int, rs1: int, rs2: int, opcode: int, funct3: int, funct7: int) -> int:
