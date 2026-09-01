@@ -4,10 +4,32 @@ class RISCV_Encoder:
     
     def encode_immediate(self, value: int, bits: int = 12, sign_extend: bool = True) -> int:
         original_value = value
+        
+        # Calculate the valid range based on sign_extend
+        if sign_extend:
+            # Signed range: -2^(bits-1) to 2^(bits-1) - 1
+            min_val = -(1 << (bits - 1))
+            max_val = (1 << (bits - 1)) - 1
+        else:
+            # Unsigned range: 0 to 2^bits - 1
+            min_val = 0
+            max_val = (1 << bits) - 1
+        
+        # CHECK: If value is outside valid range, raise error
+        if value < min_val or value > max_val:
+            raise ValueError(
+                f"[ ERROR ] Immediate value {original_value} out of range for {bits}-bit {'signed' if sign_extend else 'unsigned'} value. "
+                f"Valid range: {min_val} to {max_val}"
+            )
+        
+        # If negative and sign_extend is True, convert to two's complement
         if sign_extend and value < 0:
             value = (1 << bits) + value
         
+        # Print debug info
         print(f'├ ARG (IMM): {original_value} ({value:>{bits}b})')
+        
+        # Mask to keep only lower bits
         return value & ((1 << bits) - 1)
     
     def encode_r_format(self, rd: int, rs1: int, rs2: int, opcode: int, funct3: int, funct7: int) -> int:
