@@ -54,6 +54,12 @@ def encode_instruction(tokens: list) -> int:
     elif format_type == 'I':
         if len(operands) != 3:
             raise ValueError(f"I-format instruction '{inst_name}' expects 3 operands")
+
+        # For load instructions, the order is rd, imm, rs1 instead of rd, rs1, imm
+        if inst_name in ['lw', 'lb']:
+            # Reorder: [rd, imm, rs1] -> [rd, rs1, imm]
+            rd, imm, rs1 = operands[0], operands[1], operands[2]
+            operands = [rd, rs1, imm]
         
         params = {
             'rd': parser.get_register_info(operands[0]),
