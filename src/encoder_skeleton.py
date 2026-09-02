@@ -27,12 +27,15 @@ def encode_instruction(tokens: list) -> int:
     funct7 = int(inst_info['funct7'], 2) if inst_info['funct7'] else 0
     
     def parse_imm(imm_str: str) -> int:
-        if imm_str.startswith('0x') or imm_str.startswith('0X'):
-            return int(imm_str, 16)
-        elif imm_str.startswith('0b') or imm_str.startswith('0B'):
-            return int(imm_str, 2)
-        else:
-            return int(imm_str)
+        try:
+            if imm_str.startswith('0x') or imm_str.startswith('0X'):
+                return int(imm_str, 16)
+            elif imm_str.startswith('0b') or imm_str.startswith('0B'):
+                return int(imm_str, 2)
+            else:
+                return int(imm_str)
+        except ValueError as e:
+            raise ValueError(f"[ ERROR ] Invalid immediate: '{imm_str}'")
     
     if format_type == 'R':
         if len(operands) != 3:
