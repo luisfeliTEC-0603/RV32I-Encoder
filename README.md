@@ -29,6 +29,27 @@ ls
 riscv64-elf-as -march=rv32i test.s -o test.o
 riscv64-elf-objdump -d test.o
 
+Required by Specification:
+
+    □ Document code
+    □ Validation against official toolchain (36 test cases)
+    □ Documentation of opcode/funct3/funct7 sources (RISC-V spec reference)
+    □ Complete Markdown documentation:
+        □ Architecture overview
+        □ Design decisions
+        □ Toolchain installation instructions
+        □ Tool installation instructions
+        □ 4 output examples (R, I, S, B)
+        □ Validation comparison table
+
+Functional Improvements:
+
+    □ Better error handling for invalid inputs
+    □ Normalize load/store operand order
+    □ Edge case testing (x0, min/max values)
+    □ vectors_ejemplo.txt included
+    □ Clear error messages for unsupported instructions
+
 ---
 
 # Kit del proyecto

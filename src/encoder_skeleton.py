@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 
+# Supported instruction set (RV32I subset)
 SOPORTADAS = ["add", "sub", "and", "or", "addi", "andi",
               "lw", "lb", "sw", "sb", "beq", "bne"]
 
@@ -11,6 +12,25 @@ from riscv_encoder import RISCV_Encoder
 encoder = RISCV_Encoder()
 
 def encode_instruction(tokens: list) -> int:
+    """
+    Encode a tokenized instruction into a 32-bit word.
+    
+    This function:
+    1. Identifies the instruction format (R, I, S, or B)
+    2. Parses operands (registers and immediates)
+    3. Calls the appropriate encoder method
+    4. Returns the encoded 32-bit instruction
+    
+    Args:
+        tokens (list): Tokenized instruction (e.g., ['add', 'x5', 'x6', 'x7'])
+        
+    Returns:
+        int: 32-bit encoded instruction
+        
+    Raises:
+        ValueError: If instruction is invalid or operands are malformed
+    """
+
     print('ENCODING...') 
     if not tokens:
         raise ValueError("[ ERROR ] Empty instruction")
@@ -113,6 +133,23 @@ def encode_instruction(tokens: list) -> int:
         raise ValueError(f"Unsupported format: {format_type}")
 
 def explain_instruction(instruction: str, word: int) -> str:
+    """
+    Generate a human-readable explanation of an encoded instruction.
+    
+    This function:
+    1. Parses the instruction to identify its format
+    2. Retrieves field definitions for that format
+    3. Extracts and displays each field's value and description
+    4. Creates a formatted table with field breakdown
+    
+    Args:
+        instruction (str): Original instruction string
+        word (int): 32-bit encoded instruction
+        
+    Returns:
+        str: Formatted explanation with field breakdown
+    """
+
     tokens = parser.tokenize(instruction)
     if not tokens:
         return "Empty instruction"

@@ -1,4 +1,11 @@
 class RISCV_Encoder:
+    """
+    Encoder for RISC-V RV32I instructions.
+    
+    This class provides methods to encode assembly instructions into their
+    32-bit binary representation according to the RISC-V specification.
+    """
+
     def __init__(self):
         pass
     
