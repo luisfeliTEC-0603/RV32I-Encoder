@@ -24,6 +24,11 @@
 sudo pacman -S riscv64-elf-binutils
 ```
 
+echo "add x7, x20, x6" > test.s
+ls
+riscv64-elf-as -march=rv32i test.s -o test.o
+riscv64-elf-objdump -d test.o
+
 ---
 
 # Kit del proyecto

@@ -28,6 +28,10 @@ def encode_instruction(tokens: list) -> int:
     
     def parse_imm(imm_str: str) -> int:
         try:
+            if imm_str.startswith('.'):
+                imm_str = imm_str.replace('.', '0')
+                return eval(imm_str)
+
             if imm_str.startswith('0x') or imm_str.startswith('0X'):
                 return int(imm_str, 16)
             elif imm_str.startswith('0b') or imm_str.startswith('0B'):

@@ -27,7 +27,7 @@ class RISCV_Encoder:
             value = (1 << bits) + value
         
         # Print debug info
-        print(f'├ ARG (IMM): {original_value} ({value:>{bits}b})')
+        print(f'├ ARG (IMM): {original_value} ({value:>0{bits}b})')
         
         # Mask to keep only lower bits
         return value & ((1 << bits) - 1)
