@@ -1,83 +1,171 @@
 #!/bin/bash
-# Simple validation script
+# validate.sh - Compare encoder with official toolchain
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m'
+if [ ! -f "../run.sh" ]; then
+    echo "ERROR: ../run.sh not found"
+    exit 1
+fi
 
-# Test cases - you can modify these
-TEST_CASES=(
-    "add x5, x6, x7"
-    "addi x10, x1, -12"
-    "lw x5, 8(x6)"
-    "sw x8, -4(x2)"
-    "beq x1, x2, .+8"
-    "sub x5, x6, x7"
-    "and x5, x6, x7"
-    "or x5, x6, x7"
-    "andi x5, x6, 10"
-    "lb x5, 8(x6)"
-    "sb x8, -4(x2)"
-    "bne x1, x2, .+8"
-)
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 [file1.txt file2.txt ...]"
+    echo "       $0 *.txt"
+    exit 1
+fi
 
-echo "=========================================="
-echo "RISC-V Encoder Validation"
-echo "=========================================="
-echo ""
+# Check for toolchain
+if ! command -v riscv64-elf-as &> /dev/null; then
+    echo "WARNING: riscv64-elf-as not found"
+fi
 
-total=0
-passed=0
-failed=0
+total_passed=0
+total_failed=0
+failed_list=""
 
-for instr in "${TEST_CASES[@]}"; do
-    total=$((total + 1))
-    
-    # Get my encoder output
-    my_output=$(../run.sh "$instr" 2>/dev/null | grep "HEX:" | awk '{print $2}')
-    
-    # Get official toolchain output
-    echo ".text" > test.s
-    echo "$instr" >> test.s
-    riscv64-elf-as -march=rv32i test.s -o test.o 2>/dev/null
-    official_output=$(riscv64-elf-objdump -d test.o 2>/dev/null | \
-                     grep -v "file format" | \
-                     grep -v "Disassembly" | \
-                     grep -v "^$" | \
-                     tail -n +2 | \
-                     awk '{print $2}' | \
-                     tr -d ' ')
-    
-    # Pad official output to 8 chars
-    if [ -n "$official_output" ]; then
-        official_output=$(printf "0x%08s" "$official_output" | tr ' ' '0')
-    else
-        official_output="ERROR"
+for file in "$@"; do
+    if [ ! -f "$file" ]; then
+        echo "WARNING: File '$file' not found, skipping"
+        continue
     fi
     
-    # Compare
-    if [ "$my_output" = "$official_output" ]; then
-        echo -e "${GREEN}✅ PASS${NC}: $instr"
-        echo "   My: $my_output"
-        echo "   Official: $official_output"
-        passed=$((passed + 1))
-    else
-        echo -e "${RED}❌ FAIL${NC}: $instr"
-        echo "   My: $my_output"
-        echo "   Official: $official_output"
-        failed=$((failed + 1))
-    fi
+    echo "────────────────────────────────"
+    echo "Testing: $file"
+    echo "────────────────────────────────"
     echo ""
+    
+    passed=0
+    failed=0
+    
+    line_num=0
+    while IFS= read -r line; do
+        line_num=$((line_num + 1))
+        
+        # Skip empty lines
+        [ -z "$line" ] && continue
+        
+        # Skip comment lines
+        [[ "$line" =~ ^[[:space:]]*[#\;] ]] && continue
+        
+        # Extract instruction (ignore the ; and expected hex)
+        if [[ "$line" =~ \; ]]; then
+            instruction=$(echo "$line" | cut -d';' -f1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        else
+            instruction="$line"
+        fi
+        
+        # Remove inline comments
+        instruction=$(echo "$instruction" | sed 's/[#;].*$//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        
+        [ -z "$instruction" ] && continue
+        
+        # Get my encoder output
+        my_output=$(../run.sh "$instruction" 2>/dev/null | grep "HEX:" | sed 's/.*0x//' | tr '[:upper:]' '[:lower:]')
+        [ -z "$my_output" ] && my_output="NO_HEX"
+        
+        # Get official toolchain output
+        temp_s=$(mktemp --suffix=.s)
+        temp_o=$(mktemp --suffix=.o)
+        
+        # Check if it's a branch instruction
+        inst_name=$(echo "$instruction" | awk '{print $1}')
+        if [[ "$inst_name" == "beq" || "$inst_name" == "bne" ]]; then
+            # Extract registers and immediate
+            # Handle different formats: "beq x1, x2, 8" or "beq x1,x2,8"
+            rs1=$(echo "$instruction" | awk -F'[, ]+' '{print $2}')
+            rs2=$(echo "$instruction" | awk -F'[, ]+' '{print $3}')
+            imm=$(echo "$instruction" | awk -F'[, ]+' '{print $4}')
+            
+            # Clean up: remove any whitespace
+            rs1=$(echo "$rs1" | tr -d ' ')
+            rs2=$(echo "$rs2" | tr -d ' ')
+            imm=$(echo "$imm" | tr -d ' ')
+            
+            # Convert immediate to .+N or .-N format
+            if [[ "$imm" =~ ^-?[0-9]+$ ]]; then
+                # It's a plain number, convert to .+N or .-N
+                if [[ "$imm" =~ ^- ]]; then
+                    # Negative number: .-80
+                    imm_clean=$(echo "$imm" | sed 's/^-//')
+                    branch_imm=".-$imm_clean"
+                else
+                    # Positive number: .+80
+                    branch_imm=".+$imm"
+                fi
+            else
+                # Already has .+ or .- format, use as is
+                branch_imm="$imm"
+            fi
+            
+            # Build the branch instruction for the toolchain
+            toolchain_instruction="$inst_name $rs1, $rs2, $branch_imm"
+        else
+            # Not a branch, use as is
+            toolchain_instruction="$instruction"
+        fi
+        
+        # Write to temp file
+        echo ".text" > "$temp_s"
+        echo "$toolchain_instruction" >> "$temp_s"
+        
+        # Use -mno-relax to prevent optimization
+        riscv64-elf-as -march=rv32i -mno-relax "$temp_s" -o "$temp_o" 2>/dev/null
+        
+        # Get objdump output
+        official_output=$(riscv64-elf-objdump -d "$temp_o" 2>/dev/null | \
+                         grep -v "file format" | \
+                         grep -v "Disassembly" | \
+                         grep -v "^$" | \
+                         grep -v "\.\.\." | \
+                         tail -n +2 | \
+                         awk '{print $2}' | \
+                         tr -d ' ' | \
+                         head -1)
+        
+        rm -f "$temp_s" "$temp_o"
+        
+        [ -z "$official_output" ] && official_output="NO_HEX"
+        
+        # Compare
+        if [ "$my_output" = "$official_output" ] && [ "$my_output" != "NO_HEX" ]; then
+            echo "[ PASS ] Line $line_num: $instruction"
+            echo "   My:  0x$my_output"
+            echo "   Off: 0x$official_output"
+            echo ""
+            passed=$((passed + 1))
+        else
+            echo "[ FAIL ] Line $line_num: $instruction"
+            echo "   My:  0x$my_output"
+            echo "   Off: 0x$official_output"
+            echo "   Toolchain instr: $toolchain_instruction"
+            echo ""
+            failed=$((failed + 1))
+            failed_list="$failed_list\n  Line $line_num: $instruction\n    My:  0x$my_output\n    Off: 0x$official_output"
+        fi
+    done < "$file"
+    
+    echo "  PASSED: $passed"
+    echo "  FAILED: $failed"
+    
+    total_passed=$((total_passed + passed))
+    total_failed=$((total_failed + failed))
 done
 
-# Clean up
-rm -f test.s test.o
+echo ""
+echo "┌────────────────┐"
+echo "│ FINAL SUMMARY  │"
+echo "└────────────────┘"
+echo "Total tests:  $((total_passed + total_failed))"
+echo "Passed:       $total_passed"
+echo "Failed:       $total_failed"
 
-echo "=========================================="
-echo "RESULTS: $passed/$total passed"
-if [ $failed -eq 0 ]; then
-    echo -e "${GREEN}🎉 All tests passed!${NC}"
+if [ $total_failed -eq 0 ]; then
+    echo ""
+    echo "ALL TESTS PASSED! (•ᴗ•)"
+    echo ""
+    exit 0
 else
-    echo -e "${RED}❌ $failed tests failed${NC}"
+    echo ""
+    echo "Failed tests:"
+    echo -e "$failed_list"
+    echo ""
+    exit 1
 fi
-echo "=========================================="
