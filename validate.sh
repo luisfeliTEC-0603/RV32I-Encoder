@@ -2,8 +2,8 @@
 # validate.sh - Compare encoder with official toolchain
 
 # Check if run.sh exists in parent directory
-if [ ! -f "../run.sh" ]; then
-    echo "[ ERROR ] ../run.sh not found"
+if [ ! -f "./run.sh" ]; then
+    echo "[ ERROR ] ./run.sh not found"
     exit 1
 fi
 
@@ -36,6 +36,7 @@ for file in "$@"; do
         continue
     fi
     
+    echo ""
     echo "────────────────────────────────"
     echo "Testing: $file"
     echo "────────────────────────────────"
@@ -69,13 +70,13 @@ for file in "$@"; do
         [ -z "$instruction" ] && continue
         
         # Get my encoder output
-        my_output=$(../run.sh "$instruction" 2>/dev/null | grep "HEX:" | sed 's/.*0x//' | tr '[:upper:]' '[:lower:]')
+        my_output=$(./run.sh "$instruction" 2>/dev/null | grep "HEX:" | sed 's/.*0x//' | tr '[:upper:]' '[:lower:]')
         [ -z "$my_output" ] && my_output="NO_HEX"
         
         # Get official toolchain output
         temp_s=$(mktemp --suffix=.s)
         temp_o=$(mktemp --suffix=.o)
-        
+
         # Check if it's a branch instruction
         inst_name=$(echo "$instruction" | awk '{print $1}')
         if [[ "$inst_name" == "beq" || "$inst_name" == "bne" ]]; then
@@ -90,9 +91,9 @@ for file in "$@"; do
             rs2=$(echo "$rs2" | tr -d ' ')
             imm=$(echo "$imm" | tr -d ' ')
             
-            # Convert immediate to .+N or .-N format
+            # Convert immediate to .+N or .-N format for the toolchain
             if [[ "$imm" =~ ^-?[0-9]+$ ]]; then
-                # It's a plain number, convert to .+N or .-N
+                # It's a plain decimal number
                 if [[ "$imm" =~ ^- ]]; then
                     # Negative number: .-80
                     imm_clean=$(echo "$imm" | sed 's/^-//')
@@ -101,8 +102,32 @@ for file in "$@"; do
                     # Positive number: .+80
                     branch_imm=".+$imm"
                 fi
+            elif [[ "$imm" =~ ^-?0x[0-9a-fA-F]+$ ]]; then
+                # It's a hexadecimal number (e.g., 0x200 or -0x200)
+                # Remove the 0x prefix and keep the sign
+                if [[ "$imm" =~ ^- ]]; then
+                    # Negative hex: -0x200 -> .-0x200
+                    hex_val=$(echo "$imm" | sed 's/^-0x//')
+                    branch_imm=".-0x$hex_val"
+                else
+                    # Positive hex: 0x200 -> .+0x200
+                    hex_val=$(echo "$imm" | sed 's/^0x//')
+                    branch_imm=".+0x$hex_val"
+                fi
+            elif [[ "$imm" =~ ^-?0b[01]+$ ]]; then
+                # It's a binary number (e.g., 0b10000 or -0b10000)
+                # Remove the 0b prefix and keep the sign
+                if [[ "$imm" =~ ^- ]]; then
+                    # Negative binary: -0b10000 -> .-0b10000
+                    bin_val=$(echo "$imm" | sed 's/^-0b//')
+                    branch_imm=".-0b$bin_val"
+                else
+                    # Positive binary: 0b10000 -> .+0b10000
+                    bin_val=$(echo "$imm" | sed 's/^0b//')
+                    branch_imm=".+0b$bin_val"
+                fi
             else
-                # Already has .+ or .- format, use as is
+                # Already has .+ or .- format, or is a label, use as is
                 branch_imm="$imm"
             fi
             
@@ -112,13 +137,13 @@ for file in "$@"; do
             # Not a branch, use as is
             toolchain_instruction="$instruction"
         fi
-        
+
         # Write to temp file
         echo ".text" > "$temp_s"
         echo "$toolchain_instruction" >> "$temp_s"
         
         # Use toolchain to compile obj
-        riscv64-elf-as -march=rv32i -mno-relax "$temp_s" -o "$temp_o" 2>/dev/null
+        riscv64-elf-as -march=rv32i "$temp_s" -o "$temp_o" 2>/dev/null
         
         # Disassemble and extract the instruction bytes
         official_output=$(riscv64-elf-objdump -d "$temp_o" 2>/dev/null | \
@@ -126,11 +151,16 @@ for file in "$@"; do
                          grep -v "Disassembly" | \
                          grep -v "^$" | \
                          grep -v "\.\.\." | \
-                         tail -n +2 | \
+                         grep -E "^[[:space:]]*[0-9a-f]+:" | \
+                         head -1 | \
                          awk '{print $2}' | \
-                         tr -d ' ' | \
-                         head -1)
-        
+                         tr -d ' ')
+
+        # If we got something, take the first 8 characters (32-bit instruction)
+        if [ -n "$official_output" ]; then
+            official_output=$(echo "$official_output" | cut -c1-8)
+        fi
+
         # Remove temporary files
         rm -f "$temp_s" "$temp_o"
         

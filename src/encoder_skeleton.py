@@ -48,16 +48,31 @@ def encode_instruction(tokens: list) -> int:
     
     def parse_imm(imm_str: str) -> int:
         try:
+            # Handle PC-relative expressions for branch instructions
             if imm_str.startswith('.'):
                 imm_str = imm_str.replace('.', '0')
                 return eval(imm_str)
 
+            # Handle negative sign for hex and binary
+            is_negative = False
+            if imm_str.startswith('-'):
+                is_negative = True
+                imm_str = imm_str[1:]  # Remove the minus sign
+            
+            # Parse the value based on format
             if imm_str.startswith('0x') or imm_str.startswith('0X'):
-                return int(imm_str, 16)
+                value = int(imm_str, 16)
             elif imm_str.startswith('0b') or imm_str.startswith('0B'):
-                return int(imm_str, 2)
+                value = int(imm_str, 2)
             else:
-                return int(imm_str)
+                value = int(imm_str)
+            
+            # Apply negative sign if needed
+            if is_negative:
+                value = -value
+            
+            return value
+            
         except ValueError as e:
             raise ValueError(f"[ ERROR ] Invalid immediate: '{imm_str}'")
     
