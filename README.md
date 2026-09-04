@@ -94,3 +94,18 @@ To validate against the official RISC-V toolchain -ensure `validate.sh` is execu
 ```bash
 ./validate.sh <test.txt>
 ```
+
+> [!CAUTION]
+>
+> **Script Execution Notice**
+>
+> Both scripts (`./run.sh` and `./validate.sh`) must be executable and are intended to be run from the project root directory.
+>
+> ```bash
+> # Make scripts executable
+> chmod +x run.sh validate.sh
+>
+> # Run from project root
+> ./run.sh "add x5, x6, x7"
+> ./validate.sh tests/suite_36.txt
+> ```
