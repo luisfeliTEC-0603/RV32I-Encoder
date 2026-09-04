@@ -2,16 +2,16 @@
 
 ## 1. Architecture Overview
 
-The encoder is designed with a modular, three-part architecture to clearly separate concerns: parsing, encoding, and orchestration. This structure ensures that each component has a single, well-defined responsibility, making the system easier to understand, test, and maintain.
+The encoder is designed as a modular, three-part architecture that separates: parsing, encoding, and orchestration. This structure ensures that each component has a single, well-defined responsibility, making the system easier to understand, test, and maintain.
 
 ### 1.1 Parser Module (`riscv_parser.py`)
 
-The Parser is the gatekeeper of the encoding process. It handles the initial processing and validation of the assembly instruction string. Its core responsibilities include:
+The Parser handles the initial processing and validation of the assembly instruction string. Its core responsibilities include:
 
 - **Tokenization:** Breaking down the instruction string into meaningful tokens (mnemonic, registers, immediates) by handling separators like commas, parentheses, and whitespace.
 - **Metadata Management:** Loading all instruction formats, register mappings, and field definitions from the JSON configuration files. This approach decouples the code logic from the specific instruction set details.
 - **Syntax Validation:** Verifying that the instruction mnemonic is supported and that the register names are valid.
-- **Register Conversion:** Translating ABI register names (e.g., `sp`, `ra`) and numeric names (e.g., `x2`, `x1`) into their corresponding integer values (0-31).
+- **Register Conversion:** Translating ABI (Application Binary Interface) register names (e.g., `sp`, `ra`) and numeric names (e.g., `x2`, `x1`) into their corresponding integer values (0-31).
 
 ### 1.2 Encoder Module (`riscv_encoder.py`)
 
@@ -19,7 +19,7 @@ This module is the core of the encoding logic. It is responsible for the low-lev
 
 - **Immediate Encoding:** Handling the conversion of immediate values (decimal, hexadecimal, binary, and PC-relative) into their binary representation with correct sign extension and range validation.
 - **Format-Specific Construction:** Providing dedicated methods for each RISC-V instruction format (`R`, `I`, `S`, `B`). Each method places the opcode, funct3, funct7, register fields, and immediate fields into their correct bit positions to form a complete 32-bit word.
-- **Validation:** Ensuring that all operands fall within their valid ranges (e.g., register numbers 0-31, immediate values within 12-bit signed limits).
+- **Validation:** Ensuring that all operands fall within their valid ranges (e.g., register numbers 0-31, immediate values within limits).
 
 ### 1.3 Main Module (`encoder_skeleton.py`)
 
@@ -61,7 +61,7 @@ The encoder is designed to support a specific subset of the RV32I base integer i
 
 ### 3.1 Data Flow
 
-The encoding process follows a clear and linear flow, from user input to the final encoded output.
+The encoding process follows a linear flow, display in the next diagram.
 
 ```mermaid
 graph TD
@@ -103,7 +103,7 @@ graph TD
 
 ### 3.2 Format Detection
 
-The encoding process begins by identifying the instruction's format. This is a critical step as it determines how the operands should be parsed and how the final 32-bit word is assembled. The Parser handles this by looking up the instruction mnemonic in the `riscv_inst.json` file.
+The encoding process begins by identifying the instruction's format. The Parser handles this by looking up the instruction mnemonic in the `riscv_inst.json` file.
 
 > [!NOTE]
 > **How Format Detection Works**
@@ -125,8 +125,6 @@ The encoding process begins by identifying the instruction's format. This is a c
 > 1.  Confirms the instruction is supported.
 > 2.  Retrieves its metadata, which includes the `format`.
 > 3.  Returns the `format` string (`"R"`) and the encoding fields.
-> 
-> This design is flexible and extensible. Adding support for a new instruction simply requires adding a new entry to the JSON file and, if necessary, implementing a new encoding method, without modifying the core parsing logic.
 
 ### 3.3 Operand Parsing
 
@@ -135,7 +133,7 @@ Once the format is known, the operands are validated and converted into a usable
 > [!NOTE]
 > **Immediate Parsing**
 > 
-> The `parse_imm()` function in the skeleton is responsible for converting the immediate operand from a string into an integer. It supports a variety of formats, providing flexibility for the user. This function is also responsible for handling PC-relative expressions (`.+N`, `.-N`) used in branch instructions.
+> The `parse_imm()` function in the skeleton is responsible for converting the immediate operand from a string into an integer. It supports a variety of formats. This function is also responsible for handling PC-relative expressions (`.+N`, `.-N`) used in branch instructions.
 > 
 > | Input Format | Example | Parsed Integer Value |
 > | :--- | :--- | :--- |
@@ -144,9 +142,15 @@ Once the format is known, the operands are validated and converted into a usable
 > | Binary | `0b1010`, `-0b1010` | `10`, `-10` |
 > | PC-relative | `.+8`, `.-80` | `8`, `-80` |
 
+> [!WARNING]
+>
+> **B-Format Immediate Handling**
+>
+> The official RISC-V toolchain automatically optimizes branch instructions by modifying their encoding. To prevent this behavior and ensure correct encoding, branch immediates must be expressed as PC-relative offsets using the `.+N` (positive) or `.-N` (negative) syntax.
+
 ### 3.4 Encoding Process
 
-After parsing, the final encoding step takes place. Based on the detected format, the appropriate method in the Encoder module is called to construct the 32-bit instruction. These methods place each field into its designated bit range.
+After parsing, based on the detected format, the appropriate method in the Encoder module is called to construct the 32-bit instruction. These methods place each field into its designated bit range.
 
 > [!TIP] 
 > **Instruction Format Layouts**
@@ -326,12 +330,18 @@ HEX: 0x00208463
 
 ### 5.1 Toolchain Installation
 
-To validate the encoder's output, you will need the official RISC-V GNU toolchain. The following commands provide installation instructions for various operating systems:
+To validate the encoder's output, the official RISC-V GNU toolchain is needed. The following commands provide installation instructions for various operating systems:
 
 #### Arch Linux
 ```bash
 sudo pacman -S riscv64-elf-binutils
 ```
+
+> [!CAUTION]
+>
+> **Development Platform**
+>
+> This project was built and tested exclusively on **Arch Linux**. The installation instructions and toolchain setup for other operating systems (Ubuntu, macOS, etc.) are provided as a reference, but may contain inaccuracies or require additional steps. Users are encouraged to consult their platform's official documentation for the most accurate setup procedures.
 
 #### Ubuntu/Debian
 ```bash
@@ -359,7 +369,7 @@ The validation script (`validate.sh`) is designed to automatically test the enco
 > [!TIP]
 > **Running Validation**
 > 
-> The project includes several test files in the `test/` directory. You can run the validation script in the following ways:
+> The project includes several test files in the `tests/` directory. You can run the validation script in the following ways:
 > 
 > ```bash
 > ./validate.sh tests/suite_<n>.txt         # Run 'n' tests for all 12 supported instructions (including positive, negative, and borderline cases)
@@ -368,98 +378,166 @@ The validation script (`validate.sh`) is designed to automatically test the enco
 > ./validate.sh tests/*.txt                 # Run all available test files
 > ```
 
-The following is a sample output from running the validation on the test suite (`tests/suite_36.txt`). All 36 test cases passed, confirming that the encoder's output matches the official toolchain.
+The following is a sample output from running the validation on a test suite (`tests/suite_36.txt`). All 36 test cases passed, confirming that the encoder's output matches the official toolchain.
 
 ```
-# ============================================================================
-# RISC-V ENCODER TEST SUITE
-# ============================================================================
-# This file contains exactly 36 test cases: 3 per instruction (12 × 3).
-# Diverse tests include: positive, negative, hex, binary, zero, limits.
-# ============================================================================
+────────────────────────────────
+Testing: tests/suite_36.txt
+────────────────────────────────
 
-# ----------------------------------------------------------------------------
-# R-FORMAT INSTRUCTIONS (add, sub, and, or)
-# Tests: different register combinations, zero register, max register
-# ----------------------------------------------------------------------------
+[ PASS ] Line 14: add x5, x20, x15
+   My:  0x00fa02b3
+   Off: 0x00fa02b3
 
-# add: Addition
-add x5, x20, x15
-add x0, x7, x11
-add x31, x29, x30
+[ PASS ] Line 15: add x0, x7, x11
+   My:  0x00b38033
+   Off: 0x00b38033
 
-# sub: Subtraction
-sub x10, x28, x3
-sub x0, x5, x5
-sub x31, x1, x2
+[ PASS ] Line 16: add x31, x29, x30
+   My:  0x01ee8fb3
+   Off: 0x01ee8fb3
 
-# and: Bitwise AND
-and x17, x9, x22
-and x0, x31, x31
-and x31, x0, x31
+[ PASS ] Line 19: sub x10, x28, x3
+   My:  0x403e0533
+   Off: 0x403e0533
 
-# or: Bitwise OR
-or x12, x25, x30
-or x0, x0, x1
-or x31, x31, x0
+[ PASS ] Line 20: sub x0, x5, x5
+   My:  0x40528033
+   Off: 0x40528033
 
-# ----------------------------------------------------------------------------
-# I-FORMAT ARITHMETIC INSTRUCTIONS (addi, andi)
-# Tests: decimal, hex, binary, negative, positive, limit
-# ----------------------------------------------------------------------------
+[ PASS ] Line 21: sub x31, x1, x2
+   My:  0x40208fb3
+   Off: 0x40208fb3
 
-# addi: Add Immediate
-addi x7, x14, 0x1FF
-addi x10, x11, -2048
-addi x3, x4, 0b10101010
+[ PASS ] Line 24: and x17, x9, x22
+   My:  0x0164f8b3
+   Off: 0x0164f8b3
 
-# andi: AND Immediate
-andi x19, x6, -0x80
-andi x13, x14, 0b11001100
-andi x2, x3, 1023
+[ PASS ] Line 25: and x0, x31, x31
+   My:  0x01fff033
+   Off: 0x01fff033
 
-# ----------------------------------------------------------------------------
-# I-FORMAT LOAD INSTRUCTIONS (lw, lb)
-# Tests: various offsets, hex, binary, negative, zero
-# ----------------------------------------------------------------------------
+[ PASS ] Line 26: and x31, x0, x31
+   My:  0x01f07fb3
+   Off: 0x01f07fb3
 
-# lw: Load Word
-lw x11, 0x200(x29)
-lw x5, -0x40(x6)
-lw x8, 0b11110000(x0)
+[ PASS ] Line 29: or x12, x25, x30
+   My:  0x01ece633
+   Off: 0x01ece633
 
-# lb: Load Byte
-lb x23, -0x200(x18)
-lb x15, 0x7FF(x20)
-lb x1, 0b00110011(x2)
+[ PASS ] Line 30: or x0, x0, x1
+   My:  0x00106033
+   Off: 0x00106033
 
-# ----------------------------------------------------------------------------
-# S-FORMAT STORE INSTRUCTIONS (sw, sb)
-# Tests: various offsets, hex, binary, negative, limit
-# ----------------------------------------------------------------------------
+[ PASS ] Line 31: or x31, x31, x0
+   My:  0x000fefb3
+   Off: 0x000fefb3
 
-# sw: Store Word
-sw x27, 0x400(x24)
-sw x9, -0x200(x10)
-sw x31, 0b11111111(x30)
+[ PASS ] Line 39: addi x7, x14, 0x1FF
+   My:  0x1ff70393
+   Off: 0x1ff70393
 
-# sb: Store Byte
-sb x13, -0x400(x26)
-sb x4, 0x1FF(x5)
-sb x21, 0b10101010(x22)
+[ PASS ] Line 40: addi x10, x11, -2048
+   My:  0x80058513
+   Off: 0x80058513
 
-# ----------------------------------------------------------------------------
-# B-FORMAT BRANCH INSTRUCTIONS (beq, bne)
-# Tests: positive, negative, hex, binary, zero, limits
-# ----------------------------------------------------------------------------
+[ PASS ] Line 41: addi x3, x4, 0b10101010
+   My:  0x0aa20193
+   Off: 0x0aa20193
 
-# beq: Branch if Equal
-beq x8, x16, 0x200
-beq x1, x2, -0x80
-beq x30, x31, 0b11111111110
+[ PASS ] Line 44: andi x19, x6, -0x80
+   My:  0xf8037993
+   Off: 0xf8037993
 
-# bne: Branch if Not Equal
-bne x31, x5, -0x200
-bne x10, x11, 0x100
-bne x0, x1, 0b10000
+[ PASS ] Line 45: andi x13, x14, 0b11001100
+   My:  0x0cc77693
+   Off: 0x0cc77693
+
+[ PASS ] Line 46: andi x2, x3, 1023
+   My:  0x3ff1f113
+   Off: 0x3ff1f113
+
+[ PASS ] Line 54: lw x11, 0x200(x29)
+   My:  0x200ea583
+   Off: 0x200ea583
+
+[ PASS ] Line 55: lw x5, -0x40(x6)
+   My:  0xfc032283
+   Off: 0xfc032283
+
+[ PASS ] Line 56: lw x8, 0b11110000(x0)
+   My:  0x0f002403
+   Off: 0x0f002403
+
+[ PASS ] Line 59: lb x23, -0x200(x18)
+   My:  0xe0090b83
+   Off: 0xe0090b83
+
+[ PASS ] Line 60: lb x15, 0x7FF(x20)
+   My:  0x7ffa0783
+   Off: 0x7ffa0783
+
+[ PASS ] Line 61: lb x1, 0b00110011(x2)
+   My:  0x03310083
+   Off: 0x03310083
+
+[ PASS ] Line 69: sw x27, 0x400(x24)
+   My:  0x41bc2023
+   Off: 0x41bc2023
+
+[ PASS ] Line 70: sw x9, -0x200(x10)
+   My:  0xe0952023
+   Off: 0xe0952023
+
+[ PASS ] Line 71: sw x31, 0b11111111(x30)
+   My:  0x0fff2fa3
+   Off: 0x0fff2fa3
+
+[ PASS ] Line 74: sb x13, -0x400(x26)
+   My:  0xc0dd0023
+   Off: 0xc0dd0023
+
+[ PASS ] Line 75: sb x4, 0x1FF(x5)
+   My:  0x1e428fa3
+   Off: 0x1e428fa3
+
+[ PASS ] Line 76: sb x21, 0b10101010(x22)
+   My:  0x0b5b0523
+   Off: 0x0b5b0523
+
+[ PASS ] Line 84: beq x8, x16, 0x200
+   My:  0x21040063
+   Off: 0x21040063
+
+[ PASS ] Line 85: beq x1, x2, -0x80
+   My:  0xf82080e3
+   Off: 0xf82080e3
+
+[ PASS ] Line 86: beq x30, x31, 0b11111111110
+   My:  0x7fff0f63
+   Off: 0x7fff0f63
+
+[ PASS ] Line 89: bne x31, x5, -0x200
+   My:  0xe05f90e3
+   Off: 0xe05f90e3
+
+[ PASS ] Line 90: bne x10, x11, 0x100
+   My:  0x10b51063
+   Off: 0x10b51063
+
+[ PASS ] Line 91: bne x0, x1, 0b10000
+   My:  0x00101863
+   Off: 0x00101863
+
+  PASSED: 36
+  FAILED: 0
+
+┌────────────────┐
+│ FINAL SUMMARY  │
+└────────────────┘
+Total tests:  36
+Passed:       36
+Failed:       0
+
+ALL TESTS PASSED! (•ᴗ•)
 ```
