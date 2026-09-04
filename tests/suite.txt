@@ -1,0 +1,282 @@
+# ============================================================================
+# RISC-V ENCODER TEST SUITE
+# ============================================================================
+# This file contains 80+ test cases covering all 12 supported instructions.
+# Tests are organized by instruction with comments explaining each case.
+# The validation script will compare against the official RISC-V toolchain.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# R-FORMAT INSTRUCTIONS (add, sub, and, or)
+# Tests: positive values, zero register, maximum register
+# ----------------------------------------------------------------------------
+
+# --- add: Addition ---
+# Basic addition with positive values
+add x5, x6, x7
+# Addition using zero register (x0)
+add x0, x1, x2
+# Addition with maximum register (x31)
+add x31, x30, x29
+# Addition with different register combinations
+add x15, x20, x25
+# Addition with x0 as source
+add x8, x0, x31
+
+# --- sub: Subtraction ---
+# Basic subtraction with positive values
+sub x5, x6, x7
+# Subtraction using zero register (x0)
+sub x0, x1, x2
+# Subtraction with maximum register (x31)
+sub x31, x30, x29
+# Subtraction with different register combinations
+sub x15, x20, x25
+# Subtraction with x0 as source
+sub x8, x0, x31
+
+# --- and: Bitwise AND ---
+# Basic AND with positive values
+and x5, x6, x7
+# AND using zero register (x0)
+and x0, x1, x2
+# AND with maximum register (x31)
+and x31, x30, x29
+# AND with different register combinations
+and x15, x20, x25
+# AND with x0 as source
+and x8, x0, x31
+
+# --- or: Bitwise OR ---
+# Basic OR with positive values
+or x5, x6, x7
+# OR using zero register (x0)
+or x0, x1, x2
+# OR with maximum register (x31)
+or x31, x30, x29
+# OR with different register combinations
+or x15, x20, x25
+# OR with x0 as source
+or x8, x0, x31
+
+# ----------------------------------------------------------------------------
+# I-FORMAT ARITHMETIC INSTRUCTIONS (addi, andi)
+# Tests: positive, negative, hex, binary, and limit values
+# ----------------------------------------------------------------------------
+
+# --- addi: Add Immediate ---
+# Positive decimal immediate
+addi x5, x6, 10
+# Negative decimal immediate
+addi x5, x6, -12
+# Hexadecimal immediate (0x100)
+addi x15, x20, 0x100
+# Binary immediate (0b11111111)
+addi x8, x0, 0b11111111
+# Maximum positive immediate (2047)
+addi x5, x6, 2047
+# Minimum negative immediate (-2048)
+addi x10, x11, -2048
+# Negative hexadecimal immediate (-0x200)
+addi x1, x2, -0x200
+# Zero immediate
+addi x0, x0, 0
+
+# --- andi: AND Immediate ---
+# Positive decimal immediate
+andi x5, x6, 10
+# Negative decimal immediate
+andi x5, x6, -12
+# Hexadecimal immediate (0x100)
+andi x15, x20, 0x100
+# Binary immediate (0b11111111)
+andi x8, x0, 0b11111111
+# Maximum positive immediate (2047)
+andi x5, x6, 2047
+# Minimum negative immediate (-2048)
+andi x10, x11, -2048
+
+# ----------------------------------------------------------------------------
+# I-FORMAT LOAD INSTRUCTIONS (lw, lb)
+# Tests: positive offset, negative offset, hex, binary, limit values
+# ----------------------------------------------------------------------------
+
+# --- lw: Load Word ---
+# Positive decimal offset
+lw x5, 8(x6)
+# Negative decimal offset
+lw x5, -12(x6)
+# Hexadecimal offset (0x100)
+lw x15, 0x100(x20)
+# Binary offset (0b11111111)
+lw x8, 0b11111111(x0)
+# Maximum positive offset (2047)
+lw x5, 2047(x6)
+# Minimum negative offset (-2048)
+lw x10, -2048(x11)
+# Zero offset
+lw x0, 0(x0)
+
+# --- lb: Load Byte ---
+# Positive decimal offset
+lb x5, 8(x6)
+# Negative decimal offset
+lb x5, -12(x6)
+# Hexadecimal offset (0x100)
+lb x15, 0x100(x20)
+# Binary offset (0b11111111)
+lb x8, 0b11111111(x0)
+# Maximum positive offset (2047)
+lb x5, 2047(x6)
+# Minimum negative offset (-2048)
+lb x10, -2048(x11)
+# Zero offset
+lb x0, 0(x0)
+
+# ----------------------------------------------------------------------------
+# S-FORMAT STORE INSTRUCTIONS (sw, sb)
+# Tests: positive offset, negative offset, hex, binary, limit values
+# ----------------------------------------------------------------------------
+
+# --- sw: Store Word ---
+# Positive decimal offset
+sw x8, 8(x2)
+# Negative decimal offset
+sw x8, -12(x2)
+# Hexadecimal offset (0x100)
+sw x15, 0x100(x20)
+# Binary offset (0b11111111)
+sw x8, 0b11111111(x0)
+# Maximum positive offset (2047)
+sw x8, 2047(x2)
+# Minimum negative offset (-2048)
+sw x10, -2048(x11)
+# Zero offset
+sw x0, 0(x0)
+
+# --- sb: Store Byte ---
+# Positive decimal offset
+sb x8, 8(x2)
+# Negative decimal offset
+sb x8, -12(x2)
+# Hexadecimal offset (0x100)
+sb x15, 0x100(x20)
+# Binary offset (0b11111111)
+sb x8, 0b11111111(x0)
+# Maximum positive offset (2047)
+sb x8, 2047(x2)
+# Minimum negative offset (-2048)
+sb x10, -2048(x11)
+# Zero offset
+sb x0, 0(x0)
+
+# ----------------------------------------------------------------------------
+# B-FORMAT BRANCH INSTRUCTIONS (beq, bne)
+# Tests: positive offset, negative offset, zero offset, hex, binary, limits
+# ----------------------------------------------------------------------------
+
+# --- beq: Branch if Equal ---
+# Positive decimal offset
+beq x1, x2, 8
+# Negative decimal offset
+beq x1, x2, -8
+# Zero offset
+beq x1, x2, 0
+# Hexadecimal offset (0x100)
+beq x10, x11, 0x100
+# Binary offset (0b10000)
+beq x20, x21, 0b10000
+# Maximum positive offset (4094)
+beq x1, x2, 4094
+# Minimum negative offset (-4096)
+beq x1, x2, -4096
+# Different registers and medium offset
+beq x30, x4, 60
+# Branch with zero register
+beq x0, x1, 16
+
+# --- bne: Branch if Not Equal ---
+# Positive decimal offset
+bne x1, x2, 8
+# Negative decimal offset
+bne x1, x2, -8
+# Zero offset
+bne x1, x2, 0
+# Hexadecimal offset (0x100)
+bne x10, x11, 0x100
+# Binary offset (0b10000)
+bne x20, x21, 0b10000
+# Maximum positive offset (4094)
+bne x1, x2, 4094
+# Minimum negative offset (-4096)
+bne x1, x2, -4096
+# Different registers and medium offset
+bne x30, x4, 60
+# Branch with zero register
+bne x0, x1, 16
+
+# ----------------------------------------------------------------------------
+# EDGE CASES AND CORNER TESTS
+# Tests: combinations of extreme values and special cases
+# ----------------------------------------------------------------------------
+
+# --- All zero registers and zero immediate ---
+add x0, x0, x0
+sub x0, x0, x0
+and x0, x0, x0
+or x0, x0, x0
+addi x0, x0, 0
+andi x0, x0, 0
+lw x0, 0(x0)
+sw x0, 0(x0)
+lb x0, 0(x0)
+sb x0, 0(x0)
+beq x0, x0, 0
+bne x0, x0, 0
+
+# --- Maximum register with maximum immediate ---
+add x31, x31, x31
+addi x31, x31, 2047
+lw x31, 2047(x31)
+sw x31, 2047(x31)
+beq x31, x31, 4094
+
+# --- Minimum register with minimum immediate ---
+add x0, x0, x0
+addi x0, x0, -2048
+lw x0, -2048(x0)
+sw x0, -2048(x0)
+beq x0, x0, -4096
+
+# ----------------------------------------------------------------------------
+# ADDITIONAL REGISTER COMBINATIONS
+# Tests: various register combinations for each instruction
+# ----------------------------------------------------------------------------
+
+# --- Mixed register combinations ---
+add x5, x20, x15
+sub x10, x28, x3
+and x17, x9, x22
+or x12, x25, x30
+addi x7, x14, 0x1FF
+andi x19, x6, -0x100
+lw x11, 0x200(x29)
+lb x23, -0x200(x18)
+sw x27, 0x400(x24)
+sb x13, -0x400(x26)
+beq x8, x16, 0x200
+bne x31, x5, -0x200
+
+# --- More register variations ---
+add x7, x8, x9
+sub x20, x21, x22
+and x1, x2, x3
+or x4, x5, x6
+addi x11, x12, 0b11110000
+andi x13, x14, -0b10000000
+lw x15, 0b10101010(x16)
+lb x17, -0b11001100(x18)
+sw x19, 0b11111111(x20)
+sb x21, -0b10001000(x22)
+beq x23, x24, 0x400
+bne x25, x26, -0x400

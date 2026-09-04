@@ -832,5 +832,3 @@ Failed:       0
 
 ALL TESTS PASSED! (•ᴗ•)
 ```
-
-## 6. 

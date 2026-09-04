@@ -64,7 +64,7 @@ The encoder accepts immediates in multiple formats:
 ## Output
 
 The tool outputs:
-- A visual breakdown of instruction fields with descriptions
+- A visual breakdown of instruction fields with descriptions in a detail table
 - 32-bit binary representation
 - Hexadecimal representation (format: `HEX: 0xXXXXXXXX`)
 
