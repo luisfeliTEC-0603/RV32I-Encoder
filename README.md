@@ -66,7 +66,7 @@ The encoder accepts immediates in multiple formats:
 ## Output
 
 The tool outputs:
-- A visual breakdown of instruction fields with descriptions in a detail table
+- A visual breakdown of instruction fields with descriptions in a detailed table
 - 32-bit binary representation
 - Hexadecimal representation (format: `HEX: 0xXXXXXXXX`)
 
@@ -89,7 +89,7 @@ The tool outputs:
 
 ## Validation
 
-To validate against the official RISC-V toolchain -ensure `validate.sh` is executable::
+To validate against the official RISC-V toolchain -ensure `validate.sh` is executable:
 
 ```bash
 ./validate.sh <test.txt>
