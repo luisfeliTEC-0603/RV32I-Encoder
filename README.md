@@ -1,4 +1,4 @@
-# RV32I Instruction Encoder
+# RV32I Instruction Encoder (•ᴗ•)
 
 <div align="center">
 
