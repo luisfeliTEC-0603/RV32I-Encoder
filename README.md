@@ -7,6 +7,8 @@
 **Encoding and validation tool for the RISC-V RV32I instruction set architecture**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?logo=arch-linux&logoColor=white)](https://archlinux.org/)
+[![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
 
 </div>
 
@@ -87,7 +89,7 @@ The tool outputs:
 
 ## Validation
 
-To validate against the official RISC-V toolchain:
+To validate against the official RISC-V toolchain -ensure `validate.sh` is executable::
 
 ```bash
 ./validate.sh <test.txt>
